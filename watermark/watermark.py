@@ -1,3 +1,6 @@
+#!/usr/bin/env python
+# -*- coding=utf-8 -*-
+
 import os
 import piexif
 import click
@@ -72,9 +75,16 @@ def gps_to_place(gps_lat, gps_lon, language):
 
         location = geolocator.reverse(f"{lat}, {lon}", language=language)
         address = location.raw.get("address", {})
+        print(address)
+        
         place_list.append(address.get("country", ""))
         place_list.append(address.get("state", ""))
         place_list.append(address.get("city", ""))
+        place_list.append(address.get("town", ""))
+        place_list.append(address.get("borough", ""))
+        place_list.append(address.get("village", ""))
+        place_list.append(address.get("suburb", ""))
+
 
     except Exception as e:
         print(e)
@@ -130,6 +140,8 @@ def main(input, output, fontfamily, fontsize, margin, filetype, width, height, p
                     "font_size": int(fontsize),
                 }
             )
+        else:
+            print(f"[{input}] Unknown location.")
 
     # Add the watermark
     image = add_watermarks(image, watermarks[::-1], int(margin))
@@ -137,6 +149,8 @@ def main(input, output, fontfamily, fontsize, margin, filetype, width, height, p
     # Save the output image
     if not output:
         output = f"{os.path.splitext(input)[0]}-P.{filetype.upper()}"
+    
+    print(f"[{output}] {place_zh}")
     image.save(output)
 
 
