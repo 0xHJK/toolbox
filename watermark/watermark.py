@@ -76,15 +76,15 @@ def gps_to_place(gps_lat, gps_lon, language):
         location = geolocator.reverse(f"{lat}, {lon}", language=language)
         address = location.raw.get("address", {})
         print(address)
-        
+
         place_list.append(address.get("country", ""))
         place_list.append(address.get("state", ""))
+        place_list.append(address.get("county", ""))
         place_list.append(address.get("city", ""))
         place_list.append(address.get("town", ""))
         place_list.append(address.get("borough", ""))
         place_list.append(address.get("village", ""))
         place_list.append(address.get("suburb", ""))
-
 
     except Exception as e:
         print(e)
@@ -101,15 +101,20 @@ def gps_to_place(gps_lat, gps_lon, language):
 @click.option("-i", "--input", prompt="请输入源文件", help="源文件")
 @click.option("-o", "--output", help="输出文件")
 @click.option("-p", "--place", help="设置拍摄地址")
+@click.option("-t", "--title", help="设置图片标题")
 @click.option("-f", "--fontfamily", default="HeyMoon.ttf", help="指定字体")
 @click.option("-s", "--fontsize", default=40, help="指定字体大小", type=int)
 @click.option("-m", "--margin", default=40, help="边距", type=int)
-@click.option("-t", "--filetype", default="jpg", help="输出文件")
+@click.option("-e", "--extension", default="jpg", help="输出文件格式/后缀")
 @click.option("-w", "--width", default=3000, help="裁切宽度", type=int)
 @click.option("-h", "--height", default=2000, help="裁切高度", type=int)
-def main(input, output, fontfamily, fontsize, margin, filetype, width, height, place):
+def main(input, output, title, fontfamily, fontsize, margin, extension, width, height, place):
     # Resize and crop the image
     image = resize_and_crop_image(input, width, height)
+
+    # Save the output image
+    if not output:
+        output = f"{os.path.splitext(input)[0]}-P.{extension.upper()}"
 
     # Get the GPS coordinates and shoot time from the EXIF metadata
     exif_dict = piexif.load(image.info["exif"])
@@ -140,17 +145,16 @@ def main(input, output, fontfamily, fontsize, margin, filetype, width, height, p
                     "font_size": int(fontsize),
                 }
             )
+            print(f"[{output}] {place_zh}")
         else:
             print(f"[{input}] Unknown location.")
+
+    if title:
+        watermarks.append({"text": title, "font_family": fontfamily, "font_size": int(fontsize)})
 
     # Add the watermark
     image = add_watermarks(image, watermarks[::-1], int(margin))
 
-    # Save the output image
-    if not output:
-        output = f"{os.path.splitext(input)[0]}-P.{filetype.upper()}"
-    
-    print(f"[{output}] {place_zh}")
     image.save(output)
 
 
